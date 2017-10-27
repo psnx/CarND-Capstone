@@ -48,7 +48,7 @@ class Controller(object):
         self.LPF_angle = LowPassFilter(0.90, 1.0)
         '''
         # self.LPF_velocity = LowPassFilter(0.90, 1.0)
-        self.LPF_target_v = LowPassFilter(0.90, 0.6)
+        self.LPF_target_v = LowPassFilter(6, 0.3)
 
 
     def get_speed_control_vector(self, speed_command):
@@ -69,7 +69,8 @@ class Controller(object):
         # If we drive slower than the target sppeed, we push the gas pedal (throttle), othwise not
         # actual_v = self.LPF_velocity.filt(actual_v)
         if self.enabled:
-            target_v = self.LPF_target_v.filt(target_v)
+            target_v = self.LPF_target_v.filt(max(target_v, 0.0))
+            # rospy.logwarn('{0}'.format(target_v))
         else:
             # Keep filter warm with current speed if DBW disabled
             target_v = self.LPF_target_v.filt(actual_v)
