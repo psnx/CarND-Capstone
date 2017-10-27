@@ -34,7 +34,7 @@ class Controller(object):
         self.speed_PID = PID(0.2, 0.01, 0.05, mn = self.decel_limit, mx = self.accel_limit) # Dummy values
         self.steer_PID = PID(0.2, 0.0000001, 0.5, mn = -self.max_steer_angle, mx = self.max_steer_angle) # To be adjusted
 
-        # initial control values	
+        # initial control values
         # self.steer = 0.0
 
         # To use the yaw_controller, activate the code below
@@ -68,7 +68,11 @@ class Controller(object):
         # TODO: Change the arg, kwarg list to suit your needs
         # If we drive slower than the target sppeed, we push the gas pedal (throttle), othwise not
         # actual_v = self.LPF_velocity.filt(actual_v)
-        target_v = self.LPF_target_v.filt(target_v)
+        if self.enabled:
+            target_v = self.LPF_target_v.filt(target_v)
+        else:
+            # Keep filter warm with current speed if DBW disabled
+            target_v = self.LPF_target_v.filt(actual_v)
         speed_error = target_v - actual_v
         speed_command =  self.speed_PID.step(speed_error, self.sample_time)
         throttle_command, brake_command = self.get_speed_control_vector(speed_command)
@@ -76,10 +80,10 @@ class Controller(object):
         # Comment out the steer pid, could be reactivated if needed
         steer = self.steer_PID.step(cte_value, self.sample_time)
 
-        
+
         # To use the yaw_controller, activate the code below
         '''
-        yaw_angle = self.LPF_angle.filt(yaw_angle) 
+        yaw_angle = self.LPF_angle.filt(yaw_angle)
         steer = self.yaw_ctrl.get_steering(target_v, yaw_angle, actual_v)
         '''
         # Return throttle, brake, steer
