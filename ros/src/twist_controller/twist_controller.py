@@ -31,7 +31,7 @@ class Controller(object):
         self.sample_time = 1/50 # initial value, gets updated in loop
 
 
-        self.speed_PID = PID(1.0, 0.01, 0.1, mn = self.decel_limit, mx = self.accel_limit) # Dummy values
+        self.speed_PID = PID(0.2, 0.01, 0.05, mn = self.decel_limit, mx = self.accel_limit) # Dummy values
         self.steer_PID = PID(0.2, 0.0000001, 0.5, mn = -self.max_steer_angle, mx = self.max_steer_angle) # To be adjusted
 
         # initial control values	
@@ -48,7 +48,7 @@ class Controller(object):
         self.LPF_angle = LowPassFilter(0.90, 1.0)
         '''
         # self.LPF_velocity = LowPassFilter(0.90, 1.0)
-        # self.LPF_target_v = LowPassFilter(0.90, 1.0)
+        self.LPF_target_v = LowPassFilter(0.90, 0.6)
 
 
     def get_speed_control_vector(self, speed_command):
@@ -60,7 +60,7 @@ class Controller(object):
             throttle = max(min(speed_command, 1.0), 0.0)
             brake = 0.0
         elif speed_command < 0.0:
-            throttle = speed_command * 10
+            throttle = 0
             brake = (self.vehicle_mass + self.fuel_capacity * GAS_DENSITY) * min(abs(speed_command), abs(self.decel_limit)) * self.wheel_radius
         return throttle, brake
 
@@ -68,7 +68,7 @@ class Controller(object):
         # TODO: Change the arg, kwarg list to suit your needs
         # If we drive slower than the target sppeed, we push the gas pedal (throttle), othwise not
         # actual_v = self.LPF_velocity.filt(actual_v)
-        # target_v = self.LPF_target_v.filt(target_v)
+        target_v = self.LPF_target_v.filt(target_v)
         speed_error = target_v - actual_v
         speed_command =  self.speed_PID.step(speed_error, self.sample_time)
         throttle_command, brake_command = self.get_speed_control_vector(speed_command)
