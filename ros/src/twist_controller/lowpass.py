@@ -1,4 +1,4 @@
-from scipy.signal import butter, lfilter, lfilter_zi
+from scipy.signal import butter, lfilter
 import numpy as np
 from collections import deque
 
@@ -7,10 +7,11 @@ class LowPassFilter(object):
         # Set up Butterworth low pass filter
         self.b, self.a = butter(N, cutoff, btype='low', analog=False)
         self.x = deque(maxlen=len(self.b) - 1)
-        self.z = lfilter_zi(self.b, self.a)
+        self.z = np.zeros(len(self.b) - 1)
+        self.last_val = 0
 
     def get(self):
-        return self.x[-1]
+        return self.last_val
 
     def filt(self, val):
         # Store new value in circular buffer
